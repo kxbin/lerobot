@@ -31,7 +31,7 @@ def xlerobot_cameras_config() -> dict[str, CameraConfig]:
             index_or_path=0, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_270
         ),  
 
-        "head(RGDB)": OpenCVCameraConfig(
+        "head": OpenCVCameraConfig(
             index_or_path=3, fps=30, width=640, height=480, rotation=Cv2Rotation.NO_ROTATION
         ),                     
         

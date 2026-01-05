@@ -65,8 +65,8 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
 
         return MockRobot(config)
     elif config.type == "xlerobot":
-        from .xlerobot import xlerobot
-        return xlerobot(config)
+        from .xlerobot import XLerobot
+        return XLerobot(config)
     else:
         try:
             return cast(Robot, make_device_from_device_class(config))
