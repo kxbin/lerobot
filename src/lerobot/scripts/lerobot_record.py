@@ -60,6 +60,9 @@ lerobot-record \
 
 import logging
 import time
+import numpy as np
+import torch
+from collections import deque
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from pprint import pformat
@@ -362,6 +365,7 @@ def record_loop(
     control_time_s: int | None = None,
     single_task: str | None = None,
     display_data: bool = False,
+    action_queue: deque | None = None,
 ):
     if dataset is not None and dataset.fps != fps:
         raise ValueError(f"The dataset fps should be equal to requested fps ({dataset.fps} != {fps}).")
@@ -396,6 +400,10 @@ def record_loop(
         policy.reset()
         preprocessor.reset()
         postprocessor.reset()
+
+    # Init action queue
+    if action_queue is None:
+        action_queue = deque()
 
     timestamp = 0
     start_episode_t = time.perf_counter()
