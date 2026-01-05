@@ -392,7 +392,7 @@ def main():
     # robot = XLerobotClient(robot_config)    
 
     # For local/wired connection
-    robot_config = XLerobotConfig()
+    robot_config = XLerobotConfig(id="test")
     robot = XLerobot(robot_config)
     
     try:

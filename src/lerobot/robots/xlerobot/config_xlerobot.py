@@ -24,15 +24,15 @@ from ..config import RobotConfig
 def xlerobot_cameras_config() -> dict[str, CameraConfig]:
     return {
         "left_wrist": OpenCVCameraConfig(
-            index_or_path="1", fps=30, width=480, height=640, rotation=-90
+            index_or_path=1, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_90
         ),
 
         "right_wrist": OpenCVCameraConfig(
-            index_or_path="0", fps=30, width=480, height=640, rotation=-90
+            index_or_path=0, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_90
         ),  
 
         "head(RGDB)": OpenCVCameraConfig(
-            index_or_path="3", fps=30, width=640, height=480, rotation=Cv2Rotation.NO_ROTATION
+            index_or_path=3, fps=30, width=640, height=480, rotation=Cv2Rotation.NO_ROTATION
         ),                     
         
         # "head": RealSenseCameraConfig(
@@ -50,7 +50,7 @@ def xlerobot_cameras_config() -> dict[str, CameraConfig]:
 @RobotConfig.register_subclass("xlerobot")
 @dataclass
 class XLerobotConfig(RobotConfig):
-    
+
     port1: str = "COM3"  # port to connect to the bus (so101 + head camera)
     port2: str = "COM4"  # port to connect to the bus (same as lekiwi setup)
     disable_torque_on_disconnect: bool = True
