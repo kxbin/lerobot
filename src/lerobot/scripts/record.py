@@ -77,7 +77,7 @@ from lerobot.datasets.image_writer import safe_stop_image_writer
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import build_dataset_frame, hw_to_dataset_features
 from lerobot.datasets.video_utils import VideoEncodingManager
-from lerobot.policies.factory import make_policy
+from lerobot.policies.factory import make_policy, make_pre_post_processors
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.robots import (  # noqa: F401
     Robot,
@@ -103,6 +103,16 @@ from lerobot.teleoperators import (  # noqa: F401
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.teleoperators.xlerobot_vr.xlerobot_vr import XLerobotVRTeleop, init_vr_listener
+from typing import Any
+from lerobot.processor import (
+    PolicyAction,
+    PolicyProcessorPipeline,
+    RobotAction,
+    RobotObservation,
+    RobotProcessorPipeline,
+    make_default_processors,
+)
+from lerobot.processor.rename_processor import rename_stats
 from lerobot.utils.control_utils import (
     init_keyboard_listener,
     is_headless,
@@ -304,6 +314,8 @@ def record_loop(
     dataset: LeRobotDataset | None = None,
     teleop: Teleoperator | list[Teleoperator] | None = None,
     policy: PreTrainedPolicy | None = None,
+    preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]] | None = None,
+    postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction] | None = None,
     control_time_s: int | None = None,
     single_task: str | None = None,
     display_data: bool = False,
@@ -336,9 +348,11 @@ def record_loop(
                 "For multi-teleop, the list must contain exactly one KeyboardTeleop and one arm teleoperator. Currently only supported for LeKiwi robot."
             )
 
-    # if policy is given it needs cleaning up
-    if policy is not None:
+    # Reset policy and processor if they are provided
+    if policy is not None and preprocessor is not None and postprocessor is not None:
         policy.reset()
+        preprocessor.reset()
+        postprocessor.reset()
 
     # Init action queue
     if action_queue is None:
@@ -349,8 +363,8 @@ def record_loop(
     while timestamp < control_time_s:
         start_loop_t = time.perf_counter()
 
-        current_events = teleop.get_vr_events()
-        events.update(current_events)
+        # current_events = teleop.get_vr_events()
+        # events.update(current_events)
 
 
         if events["exit_early"]:
@@ -376,13 +390,16 @@ def record_loop(
 
         elif policy is not None:
             action_values = predict_action(
-                observation_frame,
-                policy,
-                get_safe_torch_device(policy.config.device),
-                policy.config.use_amp,
+                observation=observation_frame,
+                policy=policy,
+                device=get_safe_torch_device(policy.config.device),
+                preprocessor=preprocessor,
+                postprocessor=postprocessor,
+                use_amp=policy.config.use_amp,
                 task=single_task,
                 robot_type=robot.robot_type,
             )
+            print(action_values)
             action = {key: action_values[i].item() for i, key in enumerate(robot.action_features)}
         elif policy is None and isinstance(teleop, Teleoperator):
             action = teleop.get_action(observation, robot)
@@ -484,6 +501,18 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
 
     # Load pretrained policy
     policy = None if cfg.policy is None else make_policy(cfg.policy, ds_meta=dataset.meta)
+    preprocessor = None
+    postprocessor = None
+    if cfg.policy is not None:
+        preprocessor, postprocessor = make_pre_post_processors(
+            policy_cfg=cfg.policy,
+            pretrained_path=cfg.policy.pretrained_path,
+            dataset_stats=rename_stats(dataset.meta.stats, cfg.dataset.rename_map),
+            preprocessor_overrides={
+                "device_processor": {"device": cfg.policy.device},
+                "rename_observations_processor": {"rename_map": cfg.dataset.rename_map},
+            },
+        )
 
     robot.connect()
     if teleop is not None:
@@ -511,6 +540,8 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                 fps=cfg.dataset.fps,
                 teleop=teleop,
                 policy=policy,
+                preprocessor=preprocessor,
+                postprocessor=postprocessor,
                 dataset=dataset,
                 control_time_s=cfg.dataset.episode_time_s,
                 single_task=cfg.dataset.single_task,
