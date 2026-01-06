@@ -470,6 +470,14 @@ def record_loop(
                 tmp["theta.vel"] = 0.1
             elif "e" in act_processed_teleop:
                 tmp["theta.vel"] = -0.1
+            elif "i" in act_processed_teleop:
+                tmp["head_motor_1.pos"] = 0.1
+            elif "k" in act_processed_teleop:
+                tmp["head_motor_1.pos"] = -0.1
+            elif "j" in act_processed_teleop:
+                tmp["head_motor_2.pos"] = 0.1
+            elif "l" in act_processed_teleop:
+                tmp["head_motor_2.pos"] = -0.1
             act_processed_teleop = tmp
 
         elif policy is None and isinstance(teleop, list):
