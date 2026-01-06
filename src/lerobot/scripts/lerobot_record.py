@@ -344,6 +344,7 @@ class RecordConfig:
                   ( Rerun Log / Loop Wait )
 """
 
+last_processed_teleop = {'head_motor_1.pos': 0,'head_motor_2.pos': 0}
 
 @safe_stop_image_writer
 def record_loop(
@@ -457,28 +458,27 @@ def record_loop(
             # Applies a pipeline to the raw teleop action, default is IdentityProcessor
             act_processed_teleop = teleop_action_processor((act, obs))
 
-            tmp = {}
             if "w" in act_processed_teleop:
-                tmp["x.vel"] = 0.1
+                last_processed_teleop["x.vel"] = 0.1
             elif "s" in act_processed_teleop:
-                tmp["x.vel"] = -0.1
+                last_processed_teleop["x.vel"] = -0.1
             elif "a" in act_processed_teleop:
-                tmp["y.vel"] = 0.1
+                last_processed_teleop["y.vel"] = 0.1
             elif "d" in act_processed_teleop:
-                tmp["y.vel"] = -0.1
+                last_processed_teleop["y.vel"] = -0.1
             elif "q" in act_processed_teleop:
-                tmp["theta.vel"] = 0.1
+                last_processed_teleop["theta.vel"] = 0.1
             elif "e" in act_processed_teleop:
-                tmp["theta.vel"] = -0.1
-            elif "i" in act_processed_teleop:
-                tmp["head_motor_1.pos"] = 10
-            elif "k" in act_processed_teleop:
-                tmp["head_motor_1.pos"] = -10
+                last_processed_teleop["theta.vel"] = -0.1
             elif "j" in act_processed_teleop:
-                tmp["head_motor_2.pos"] = 10
+                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] + 5, 45)
             elif "l" in act_processed_teleop:
-                tmp["head_motor_2.pos"] = -10
-            act_processed_teleop = tmp
+                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -45)
+            elif "i" in act_processed_teleop:
+                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] + 5, 45)
+            elif "k" in act_processed_teleop:
+                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -45)
+            act_processed_teleop = last_processed_teleop
 
         elif policy is None and isinstance(teleop, list):
             arm_action = teleop_arm.get_action()
