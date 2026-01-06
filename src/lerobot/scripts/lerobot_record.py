@@ -456,10 +456,30 @@ def record_loop(
 
             # Applies a pipeline to the raw teleop action, default is IdentityProcessor
             act_processed_teleop = teleop_action_processor((act, obs))
-            print('----')
-            print(act)
+            mapping_rule = {
+                "i": "left.arm.shoulder.pan.pos",    
+                "j": "left.arm.shoulder.lift.pos",   
+                "k": "left.arm.elbow.roll.pos",      
+                "x": "left.arm.elbow.flex.pos",      
+                "y": "left.arm.wrist.roll.pos",      
+                "l": "right.arm.shoulder.pan.pos",   
+                "m": "right.arm.shoulder.lift.pos",  
+                "n": "right.arm.elbow.roll.pos",     
+                "o": "right.arm.elbow.flex.pos",     
+                "p": "right.arm.wrist.roll.pos",     
+                "q": "right.arm.wrist.flex.pos",     
+                "r": "right.arm.gripper.pos",        
+                "s": "head.motor.1.pos",             
+                "t": "head.motor.2.pos",             
+                "w": "x.vel",                        
+                "a": "y.vel",                        
+                "w": "theta.vel"                     
+            }
+            tmp = {}
+            for key in act_processed_teleop.items():
+                tmp[mapping_rule[key]] = 0.1
+            act_processed_teleop = tmp
             print(act_processed_teleop)
-            print('----')
 
         elif policy is None and isinstance(teleop, list):
             arm_action = teleop_arm.get_action()
