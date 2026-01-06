@@ -485,10 +485,10 @@ def record_loop(
             elif "j" in act_processed_teleop:
                 last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 45)
             elif "l" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] + 5, -45)
-            elif "i" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] + 5, 45)
+                last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -45)
             elif "k" in act_processed_teleop:
+                last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 45)
+            elif "i" in act_processed_teleop:
                 last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -45)
             act_processed_teleop = last_processed_teleop
 
