@@ -476,6 +476,15 @@ def record_loop(
                 "w": "theta.vel"                     
             }
             tmp = {}
+            if "w" in act_processed_teleop:
+                tmp["x.vel"] = 0.1
+            elif "s" in act_processed_teleop:
+                tmp["x.vel"] = -0.1
+            elif "a" in act_processed_teleop:
+                tmp["y.vel"] = 0.1
+            elif "d" in act_processed_teleop:
+                tmp["y.vel"] = -0.1
+            
             for key in act_processed_teleop.items():
                 tmp[mapping_rule[key]] = 0.1
             act_processed_teleop = tmp
