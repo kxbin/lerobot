@@ -456,25 +456,7 @@ def record_loop(
 
             # Applies a pipeline to the raw teleop action, default is IdentityProcessor
             act_processed_teleop = teleop_action_processor((act, obs))
-            mapping_rule = {
-                "i": "left.arm.shoulder.pan.pos",    
-                "j": "left.arm.shoulder.lift.pos",   
-                "k": "left.arm.elbow.roll.pos",      
-                "x": "left.arm.elbow.flex.pos",      
-                "y": "left.arm.wrist.roll.pos",      
-                "l": "right.arm.shoulder.pan.pos",   
-                "m": "right.arm.shoulder.lift.pos",  
-                "n": "right.arm.elbow.roll.pos",     
-                "o": "right.arm.elbow.flex.pos",     
-                "p": "right.arm.wrist.roll.pos",     
-                "q": "right.arm.wrist.flex.pos",     
-                "r": "right.arm.gripper.pos",        
-                "s": "head.motor.1.pos",             
-                "t": "head.motor.2.pos",             
-                "w": "x.vel",                        
-                "a": "y.vel",                        
-                "w": "theta.vel"                     
-            }
+
             tmp = {}
             if "w" in act_processed_teleop:
                 tmp["x.vel"] = 0.1
@@ -484,9 +466,11 @@ def record_loop(
                 tmp["y.vel"] = 0.1
             elif "d" in act_processed_teleop:
                 tmp["y.vel"] = -0.1
-                
+            elif "q" in act_processed_teleop:
+                tmp["theta.vel"] = 0.1
+            elif "e" in act_processed_teleop:
+                tmp["theta.vel"] = -0.1
             act_processed_teleop = tmp
-            print(act_processed_teleop)
 
         elif policy is None and isinstance(teleop, list):
             arm_action = teleop_arm.get_action()
@@ -516,7 +500,7 @@ def record_loop(
         # so action actually sent is saved in the dataset. action = postprocessor.process(action)
         # TODO(steven, pepijn, adil): we should use a pipeline step to clip the action, so the sent action is the action that we input to the robot.
         print(robot_action_to_send)
-        #_sent_action = robot.send_action(robot_action_to_send)
+        _sent_action = robot.send_action(robot_action_to_send)
 
         # Write to dataset
         if dataset is not None:
