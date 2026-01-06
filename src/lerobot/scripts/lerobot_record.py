@@ -460,20 +460,32 @@ def record_loop(
 
             if "w" in act_processed_teleop:
                 last_processed_teleop["x.vel"] = 0.1
-            elif "s" in act_processed_teleop:
+            else:
+                last_processed_teleop["x.vel"] = 0
+
+            if "s" in act_processed_teleop:
                 last_processed_teleop["x.vel"] = -0.1
-            elif "a" in act_processed_teleop:
+            else:
+                last_processed_teleop["x.vel"] = 0
+
+            if "a" in act_processed_teleop:
                 last_processed_teleop["y.vel"] = 0.1
-            elif "d" in act_processed_teleop:
+            else:
+                last_processed_teleop["y.vel"] = 0
+            
+            if "d" in act_processed_teleop:
                 last_processed_teleop["y.vel"] = -0.1
-            elif "q" in act_processed_teleop:
+            else:
+                last_processed_teleop["y.vel"] = 0
+
+            if "q" in act_processed_teleop:
                 last_processed_teleop["theta.vel"] = 0.1
             elif "e" in act_processed_teleop:
                 last_processed_teleop["theta.vel"] = -0.1
             elif "j" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] + 5, 45)
+                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 45)
             elif "l" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -45)
+                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] + 5, -45)
             elif "i" in act_processed_teleop:
                 last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] + 5, 45)
             elif "k" in act_processed_teleop:
