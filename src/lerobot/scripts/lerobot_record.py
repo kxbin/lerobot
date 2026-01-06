@@ -415,7 +415,11 @@ def record_loop(
             break
 
         # Get robot observation
-        obs = robot.get_observation()
+        try:
+            obs = robot.get_observation()
+        except TimeoutError as e:
+            logging.warning(f"Camera timeout: {e}. Skipping this frame.")
+            continue  # skip current
 
         # Applies a pipeline to the raw robot observation, default is IdentityProcessor
         obs_processed = robot_observation_processor(obs)
@@ -423,8 +427,14 @@ def record_loop(
         if policy is not None or dataset is not None:
             observation_frame = build_dataset_frame(dataset.features, obs_processed, prefix=OBS_STR)
 
+        # if queue not None, use the action
+        if action_queue:
+            action = action_queue.popleft()
+            if action == {}: # flag for the reset
+                action = teleop.move_to_zero_position(robot)
+        
         # Get action from either policy or teleop
-        if policy is not None and preprocessor is not None and postprocessor is not None:
+        elif policy is not None and preprocessor is not None and postprocessor is not None:
             action_values = predict_action(
                 observation=observation_frame,
                 policy=policy,
@@ -435,6 +445,7 @@ def record_loop(
                 task=single_task,
                 robot_type=robot.robot_type,
             )
+            print(action_values)
 
             act_processed_policy: RobotAction = make_robot_action(action_values, dataset.features)
 
@@ -471,6 +482,7 @@ def record_loop(
         # Action can eventually be clipped using `max_relative_target`,
         # so action actually sent is saved in the dataset. action = postprocessor.process(action)
         # TODO(steven, pepijn, adil): we should use a pipeline step to clip the action, so the sent action is the action that we input to the robot.
+        print(robot_action_to_send)
         _sent_action = robot.send_action(robot_action_to_send)
 
         # Write to dataset
