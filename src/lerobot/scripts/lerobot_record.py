@@ -485,7 +485,7 @@ def record_loop(
         # so action actually sent is saved in the dataset. action = postprocessor.process(action)
         # TODO(steven, pepijn, adil): we should use a pipeline step to clip the action, so the sent action is the action that we input to the robot.
         print(robot_action_to_send)
-        _sent_action = robot.send_action(robot_action_to_send)
+        #_sent_action = robot.send_action(robot_action_to_send)
 
         # Write to dataset
         if dataset is not None:
