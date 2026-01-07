@@ -338,7 +338,7 @@ def record_loop(
 
             if isinstance(teleop, Teleoperator):
                 act = teleop.get_action()
-                if "w" or "s" in act:
+                if "w" in act or "s" in act:
                     if "w" in act:
                         last_processed_teleop["x.vel"] = 0.1
                     if "s" in act:
@@ -346,7 +346,7 @@ def record_loop(
                 else:
                     last_processed_teleop["x.vel"] = 0
                 
-                if "a" or "d" in act:
+                if "a" in act or "d" in act:
                     if "a" in act:
                         last_processed_teleop["y.vel"] = 0.1
                     if "d" in act:
@@ -373,7 +373,7 @@ def record_loop(
             # Applies a pipeline to the raw teleop action, default is IdentityProcessor
             act_processed_teleop = teleop_action_processor((act, obs))
 
-            if "w" or "s" in act_processed_teleop:
+            if "w" in act_processed_teleop or "s" in act_processed_teleop:
                 if "w" in act_processed_teleop:
                     last_processed_teleop["x.vel"] = 0.1
                 if "s" in act_processed_teleop:
@@ -381,7 +381,7 @@ def record_loop(
             else:
                 last_processed_teleop["x.vel"] = 0
             
-            if "a" or "d" in act_processed_teleop:
+            if "a" in act_processed_teleop or "d" in act_processed_teleop:
                 if "a" in act_processed_teleop:
                     last_processed_teleop["y.vel"] = 0.1
                 if "d" in act_processed_teleop:
