@@ -359,9 +359,9 @@ def record_loop(
 
                     if "q" in act or "e" in act:
                         if "q" in act:
-                            last_processed_teleop["theta.vel"] = 3
+                            last_processed_teleop["theta.vel"] = 15
                         if "e" in act:
-                            last_processed_teleop["theta.vel"] = -3
+                            last_processed_teleop["theta.vel"] = -15
                     else:
                         last_processed_teleop["theta.vel"] = 0
 
@@ -384,41 +384,39 @@ def record_loop(
                 arm_action = teleop_arm.get_action()
                 arm_action = {k.replace('left_', 'left_arm_').replace('right_', 'right_arm_'): v for k, v in arm_action.items()}
                 keyboard_action = teleop_keyboard.get_action()
-                base_action = robot._from_keyboard_to_base_action(keyboard_action)
-                act = {**arm_action, **base_action} if len(base_action) > 0 else arm_action
-                act_processed_teleop = teleop_action_processor((act, obs))
+                act_processed_teleop = teleop_action_processor((arm_action, obs))
 
-                if "w" in act_processed_teleop or "s" in act_processed_teleop:
-                    if "w" in act_processed_teleop:
+                if "w" in keyboard_action or "s" in keyboard_action:
+                    if "w" in keyboard_action:
                         last_processed_teleop["x.vel"] = 0.1
-                    if "s" in act_processed_teleop:
+                    if "s" in keyboard_action:
                         last_processed_teleop["x.vel"] = -0.1
                 else:
                     last_processed_teleop["x.vel"] = 0
                 
-                if "a" in act_processed_teleop or "d" in act_processed_teleop:
-                    if "a" in act_processed_teleop:
+                if "a" in keyboard_action or "d" in keyboard_action:
+                    if "a" in keyboard_action:
                         last_processed_teleop["y.vel"] = 0.1
-                    if "d" in act_processed_teleop:
+                    if "d" in keyboard_action:
                         last_processed_teleop["y.vel"] = -0.1
                 else:
                     last_processed_teleop["y.vel"] = 0
         
-                if "q" in act_processed_teleop or "e" in act_processed_teleop:
-                    if "q" in act_processed_teleop:
-                        last_processed_teleop["theta.vel"] = 3
-                    if "e" in act_processed_teleop:
-                        last_processed_teleop["theta.vel"] = -3
+                if "q" in keyboard_action or "e" in keyboard_action:
+                    if "q" in keyboard_action:
+                        last_processed_teleop["theta.vel"] = 15
+                    if "e" in keyboard_action:
+                        last_processed_teleop["theta.vel"] = -15
                 else:
                     last_processed_teleop["theta.vel"] = 0
 
-                if "j" in act_processed_teleop:
+                if "j" in keyboard_action:
                     last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -90)
-                elif "l" in act_processed_teleop:
+                elif "l" in keyboard_action:
                     last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, 90)
-                elif "i" in act_processed_teleop:
+                elif "i" in keyboard_action:
                     last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -90)
-                elif "k" in act_processed_teleop:
+                elif "k" in keyboard_action:
                     last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
             
                 act_processed_teleop.update(last_processed_teleop)
