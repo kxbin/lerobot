@@ -356,20 +356,20 @@ def record_loop(
 
                 if "q" in act or "e" in act:
                     if "q" in act:
-                        last_processed_teleop["theta.vel"] = 0.1
+                        last_processed_teleop["theta.vel"] = 0.5
                     if "e" in act:
-                        last_processed_teleop["theta.vel"] = -0.1
+                        last_processed_teleop["theta.vel"] = -0.5
                 else:
                     last_processed_teleop["theta.vel"] = 0
 
                 if "j" in act:
-                    last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -80)
+                    last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -90)
                 elif "l" in act:
-                    last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 80)
+                    last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, 90)
                 elif "i" in act:
-                    last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -80)
+                    last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -90)
                 elif "k" in act:
-                    last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 80)
+                    last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
 
         elif policy is None and isinstance(teleop, Teleoperator):
             act = teleop.get_action()
@@ -395,20 +395,20 @@ def record_loop(
     
             if "q" in act_processed_teleop or "e" in act_processed_teleop:
                 if "q" in act_processed_teleop:
-                    last_processed_teleop["theta.vel"] = 0.1
+                    last_processed_teleop["theta.vel"] = 0.5
                 if "e" in act_processed_teleop:
-                    last_processed_teleop["theta.vel"] = -0.1
+                    last_processed_teleop["theta.vel"] = -0.5
             else:
                 last_processed_teleop["theta.vel"] = 0
 
             if "j" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -80)
+                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -90)
             elif "l" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 80)
+                last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, 90)
             elif "i" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -80)
+                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -90)
             elif "k" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 80)
+                last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
            
             act_processed_teleop = last_processed_teleop
 
