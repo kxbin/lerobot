@@ -112,6 +112,7 @@ from lerobot.teleoperators import (  # noqa: F401
     omx_leader,
     so100_leader,
     so101_leader,
+    xlerobot,
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.constants import ACTION, OBS_STR
@@ -281,13 +282,14 @@ def record_loop(
                         | so101_leader.SO101Leader
                         | koch_leader.KochLeader
                         | omx_leader.OmxLeader
+                        | bi_so100_leader.BiSO100Leader
                     ),
                 )
             ),
             None,
         )
 
-        if not (teleop_arm and teleop_keyboard and len(teleop) == 2 and robot.name == "lekiwi_client"):
+        if not (teleop_arm and teleop_keyboard and len(teleop) == 2 and (robot.name == "lekiwi_client" or robot.name == "xlerobot")):
             raise ValueError(
                 "For multi-teleop, the list must contain exactly one KeyboardTeleop and one arm teleoperator. Currently only supported for LeKiwi robot."
             )
@@ -378,6 +380,14 @@ def record_loop(
                 # Applies a pipeline to the raw teleop action, default is IdentityProcessor
                 act_processed_teleop = teleop_action_processor((act, obs))
 
+            elif policy is None and isinstance(teleop, list):
+                arm_action = teleop_arm.get_action()
+                arm_action = {k.replace('left_', 'left_arm_').replace('right_', 'right_arm_'): v for k, v in arm_action.items()}
+                keyboard_action = teleop_keyboard.get_action()
+                base_action = robot._from_keyboard_to_base_action(keyboard_action)
+                act = {**arm_action, **base_action} if len(base_action) > 0 else arm_action
+                act_processed_teleop = teleop_action_processor((act, obs))
+
                 if "w" in act_processed_teleop or "s" in act_processed_teleop:
                     if "w" in act_processed_teleop:
                         last_processed_teleop["x.vel"] = 0.1
@@ -411,15 +421,7 @@ def record_loop(
                 elif "k" in act_processed_teleop:
                     last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
             
-                act_processed_teleop = last_processed_teleop
-
-            elif policy is None and isinstance(teleop, list):
-                arm_action = teleop_arm.get_action()
-                arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
-                keyboard_action = teleop_keyboard.get_action()
-                base_action = robot._from_keyboard_to_base_action(keyboard_action)
-                act = {**arm_action, **base_action} if len(base_action) > 0 else arm_action
-                act_processed_teleop = teleop_action_processor((act, obs))
+                act_processed_teleop.update(last_processed_teleop)
             else:
                 logging.info(
                     "No policy or teleoperator provided, skipping action generation."
@@ -536,7 +538,11 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
 
         robot.connect()
         if teleop is not None:
-            teleop.connect()
+            if isinstance(teleop, list):
+                for el in teleop:
+                    el.connect()
+            else:
+                teleop.connect()
 
         listener, events = init_keyboard_listener()
 
@@ -597,8 +603,14 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
 
         if robot.is_connected:
             robot.disconnect()
-        if teleop and teleop.is_connected:
-            teleop.disconnect()
+        if teleop:
+            if isinstance(teleop, list):
+                for el in teleop:
+                    if el.is_connected:
+                        el.disconnect()
+            else:
+                if teleop.is_connected:
+                    teleop.disconnect()
 
         if not is_headless() and listener:
             listener.stop()
