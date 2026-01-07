@@ -363,13 +363,13 @@ def record_loop(
                     last_processed_teleop["theta.vel"] = 0
 
                 if "j" in act:
-                    last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -60)
+                    last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -80)
                 elif "l" in act:
-                    last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 60)
+                    last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 80)
                 elif "i" in act:
-                    last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -60)
+                    last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -80)
                 elif "k" in act:
-                    last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 60)
+                    last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 80)
 
         elif policy is None and isinstance(teleop, Teleoperator):
             act = teleop.get_action()
@@ -402,13 +402,13 @@ def record_loop(
                 last_processed_teleop["theta.vel"] = 0
 
             if "j" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -60)
+                last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, -80)
             elif "l" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 60)
+                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, 80)
             elif "i" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -60)
+                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -80)
             elif "k" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 60)
+                last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 80)
            
             act_processed_teleop = last_processed_teleop
 
