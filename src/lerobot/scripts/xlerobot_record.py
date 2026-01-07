@@ -357,9 +357,9 @@ def record_loop(
 
                     if "q" in act or "e" in act:
                         if "q" in act:
-                            last_processed_teleop["theta.vel"] = 3
+                            last_processed_teleop["theta.vel"] = 10
                         if "e" in act:
-                            last_processed_teleop["theta.vel"] = -3
+                            last_processed_teleop["theta.vel"] = -10
                     else:
                         last_processed_teleop["theta.vel"] = 0
 
@@ -396,9 +396,9 @@ def record_loop(
         
                 if "q" in act_processed_teleop or "e" in act_processed_teleop:
                     if "q" in act_processed_teleop:
-                        last_processed_teleop["theta.vel"] = 3
+                        last_processed_teleop["theta.vel"] = 10
                     if "e" in act_processed_teleop:
-                        last_processed_teleop["theta.vel"] = -3
+                        last_processed_teleop["theta.vel"] = -10
                 else:
                     last_processed_teleop["theta.vel"] = 0
 
