@@ -23,15 +23,15 @@ from ..config import RobotConfig
 
 def xlerobot_cameras_config() -> dict[str, CameraConfig]:
     return {
-        "left_wrist": OpenCVCameraConfig(
-            index_or_path=0, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_270
+        "camera1": OpenCVCameraConfig(
+            index_or_path=1, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_270
         ),
 
-        "right_wrist": OpenCVCameraConfig(
-            index_or_path=2, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_270
+        "camera2": OpenCVCameraConfig(
+            index_or_path=0, fps=30, width=480, height=640, rotation=Cv2Rotation.ROTATE_270
         ),  
 
-        "head": OpenCVCameraConfig(
+        "camera3": OpenCVCameraConfig(
             index_or_path=3, fps=30, width=640, height=480, rotation=Cv2Rotation.NO_ROTATION
         ),                     
         
