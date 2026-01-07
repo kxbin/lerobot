@@ -298,165 +298,166 @@ def record_loop(
         preprocessor.reset()
         postprocessor.reset()
 
-    timestamp = 0
-    start_episode_t = time.perf_counter()
-    while timestamp < control_time_s:
-        start_loop_t = time.perf_counter()
+    with open("robot_action.txt", "a", encoding="utf-8") as f:
+        timestamp = 0
+        start_episode_t = time.perf_counter()
+        while timestamp < control_time_s:
+            start_loop_t = time.perf_counter()
 
-        if events["exit_early"]:
-            events["exit_early"] = False
-            break
+            if events["exit_early"]:
+                events["exit_early"] = False
+                break
 
-        # Get robot observation
-        try:
-            obs = robot.get_observation()
-        except TimeoutError as e:
-            logging.warning(f"Camera timeout: {e}. Skipping this frame.")
-            continue  # skip current
+            # Get robot observation
+            try:
+                obs = robot.get_observation()
+            except TimeoutError as e:
+                logging.warning(f"Camera timeout: {e}. Skipping this frame.")
+                continue  # skip current
 
-        # Applies a pipeline to the raw robot observation, default is IdentityProcessor
-        obs_processed = robot_observation_processor(obs)
+            # Applies a pipeline to the raw robot observation, default is IdentityProcessor
+            obs_processed = robot_observation_processor(obs)
 
-        if policy is not None or dataset is not None:
-            observation_frame = build_dataset_frame(dataset.features, obs_processed, prefix=OBS_STR)
+            if policy is not None or dataset is not None:
+                observation_frame = build_dataset_frame(dataset.features, obs_processed, prefix=OBS_STR)
 
-        # Get action from either policy or teleop
-        if policy is not None and preprocessor is not None and postprocessor is not None:
-            action_values = predict_action(
-                observation=observation_frame,
-                policy=policy,
-                device=get_safe_torch_device(policy.config.device),
-                preprocessor=preprocessor,
-                postprocessor=postprocessor,
-                use_amp=policy.config.use_amp,
-                task=single_task,
-                robot_type=robot.robot_type,
-            )
-            print(action_values)
+            # Get action from either policy or teleop
+            if policy is not None and preprocessor is not None and postprocessor is not None:
+                action_values = predict_action(
+                    observation=observation_frame,
+                    policy=policy,
+                    device=get_safe_torch_device(policy.config.device),
+                    preprocessor=preprocessor,
+                    postprocessor=postprocessor,
+                    use_amp=policy.config.use_amp,
+                    task=single_task,
+                    robot_type=robot.robot_type,
+                )
+                f.write(str(action_values) + "\n")
 
-            act_processed_policy: RobotAction = make_robot_action(action_values, dataset.features)
+                act_processed_policy: RobotAction = make_robot_action(action_values, dataset.features)
 
-            if isinstance(teleop, Teleoperator):
+                if isinstance(teleop, Teleoperator):
+                    act = teleop.get_action()
+                    if "w" in act or "s" in act:
+                        if "w" in act:
+                            last_processed_teleop["x.vel"] = 0.1
+                        if "s" in act:
+                            last_processed_teleop["x.vel"] = -0.1
+                    else:
+                        last_processed_teleop["x.vel"] = 0
+                    
+                    if "a" in act or "d" in act:
+                        if "a" in act:
+                            last_processed_teleop["y.vel"] = 0.1
+                        if "d" in act:
+                            last_processed_teleop["y.vel"] = -0.1
+                    else:
+                        last_processed_teleop["y.vel"] = 0
+
+                    if "q" in act or "e" in act:
+                        if "q" in act:
+                            last_processed_teleop["theta.vel"] = 3
+                        if "e" in act:
+                            last_processed_teleop["theta.vel"] = -3
+                    else:
+                        last_processed_teleop["theta.vel"] = 0
+
+                    if "j" in act:
+                        last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -90)
+                    elif "l" in act:
+                        last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, 90)
+                    elif "i" in act:
+                        last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -90)
+                    elif "k" in act:
+                        last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
+
+            elif policy is None and isinstance(teleop, Teleoperator):
                 act = teleop.get_action()
-                if "w" in act or "s" in act:
-                    if "w" in act:
+
+                # Applies a pipeline to the raw teleop action, default is IdentityProcessor
+                act_processed_teleop = teleop_action_processor((act, obs))
+
+                if "w" in act_processed_teleop or "s" in act_processed_teleop:
+                    if "w" in act_processed_teleop:
                         last_processed_teleop["x.vel"] = 0.1
-                    if "s" in act:
+                    if "s" in act_processed_teleop:
                         last_processed_teleop["x.vel"] = -0.1
                 else:
                     last_processed_teleop["x.vel"] = 0
                 
-                if "a" in act or "d" in act:
-                    if "a" in act:
+                if "a" in act_processed_teleop or "d" in act_processed_teleop:
+                    if "a" in act_processed_teleop:
                         last_processed_teleop["y.vel"] = 0.1
-                    if "d" in act:
+                    if "d" in act_processed_teleop:
                         last_processed_teleop["y.vel"] = -0.1
                 else:
                     last_processed_teleop["y.vel"] = 0
-
-                if "q" in act or "e" in act:
-                    if "q" in act:
+        
+                if "q" in act_processed_teleop or "e" in act_processed_teleop:
+                    if "q" in act_processed_teleop:
                         last_processed_teleop["theta.vel"] = 3
-                    if "e" in act:
+                    if "e" in act_processed_teleop:
                         last_processed_teleop["theta.vel"] = -3
                 else:
                     last_processed_teleop["theta.vel"] = 0
 
-                if "j" in act:
+                if "j" in act_processed_teleop:
                     last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -90)
-                elif "l" in act:
+                elif "l" in act_processed_teleop:
                     last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, 90)
-                elif "i" in act:
+                elif "i" in act_processed_teleop:
                     last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -90)
-                elif "k" in act:
+                elif "k" in act_processed_teleop:
                     last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
-
-        elif policy is None and isinstance(teleop, Teleoperator):
-            act = teleop.get_action()
-
-            # Applies a pipeline to the raw teleop action, default is IdentityProcessor
-            act_processed_teleop = teleop_action_processor((act, obs))
-
-            if "w" in act_processed_teleop or "s" in act_processed_teleop:
-                if "w" in act_processed_teleop:
-                    last_processed_teleop["x.vel"] = 0.1
-                if "s" in act_processed_teleop:
-                    last_processed_teleop["x.vel"] = -0.1
-            else:
-                last_processed_teleop["x.vel"] = 0
             
-            if "a" in act_processed_teleop or "d" in act_processed_teleop:
-                if "a" in act_processed_teleop:
-                    last_processed_teleop["y.vel"] = 0.1
-                if "d" in act_processed_teleop:
-                    last_processed_teleop["y.vel"] = -0.1
+                act_processed_teleop = last_processed_teleop
+
+            elif policy is None and isinstance(teleop, list):
+                arm_action = teleop_arm.get_action()
+                arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
+                keyboard_action = teleop_keyboard.get_action()
+                base_action = robot._from_keyboard_to_base_action(keyboard_action)
+                act = {**arm_action, **base_action} if len(base_action) > 0 else arm_action
+                act_processed_teleop = teleop_action_processor((act, obs))
             else:
-                last_processed_teleop["y.vel"] = 0
-    
-            if "q" in act_processed_teleop or "e" in act_processed_teleop:
-                if "q" in act_processed_teleop:
-                    last_processed_teleop["theta.vel"] = 3
-                if "e" in act_processed_teleop:
-                    last_processed_teleop["theta.vel"] = -3
+                logging.info(
+                    "No policy or teleoperator provided, skipping action generation."
+                    "This is likely to happen when resetting the environment without a teleop device."
+                    "The robot won't be at its rest position at the start of the next episode."
+                )
+                continue
+
+            # Applies a pipeline to the action, default is IdentityProcessor
+            if policy is not None and act_processed_policy is not None:
+                action_values = act_processed_policy
+                robot_action_to_send = robot_action_processor((act_processed_policy, obs))
             else:
-                last_processed_teleop["theta.vel"] = 0
+                action_values = act_processed_teleop
+                robot_action_to_send = robot_action_processor((act_processed_teleop, obs))
 
-            if "j" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = max(last_processed_teleop["head_motor_1.pos"] - 5, -90)
-            elif "l" in act_processed_teleop:
-                last_processed_teleop["head_motor_1.pos"] = min(last_processed_teleop["head_motor_1.pos"] + 5, 90)
-            elif "i" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = max(last_processed_teleop["head_motor_2.pos"] - 5, -90)
-            elif "k" in act_processed_teleop:
-                last_processed_teleop["head_motor_2.pos"] = min(last_processed_teleop["head_motor_2.pos"] + 5, 90)
-           
-            act_processed_teleop = last_processed_teleop
+            # Send action to robot
+            # Action can eventually be clipped using `max_relative_target`,
+            # so action actually sent is saved in the dataset. action = postprocessor.process(action)
+            # TODO(steven, pepijn, adil): we should use a pipeline step to clip the action, so the sent action is the action that we input to the robot.
+            f.write(str(robot_action_to_send) + "\n")
+            if policy is not None:
+                robot_action_to_send.update(last_processed_teleop)
+            _sent_action = robot.send_action(robot_action_to_send)
 
-        elif policy is None and isinstance(teleop, list):
-            arm_action = teleop_arm.get_action()
-            arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
-            keyboard_action = teleop_keyboard.get_action()
-            base_action = robot._from_keyboard_to_base_action(keyboard_action)
-            act = {**arm_action, **base_action} if len(base_action) > 0 else arm_action
-            act_processed_teleop = teleop_action_processor((act, obs))
-        else:
-            logging.info(
-                "No policy or teleoperator provided, skipping action generation."
-                "This is likely to happen when resetting the environment without a teleop device."
-                "The robot won't be at its rest position at the start of the next episode."
-            )
-            continue
+            # Write to dataset
+            if dataset is not None:
+                action_frame = build_dataset_frame(dataset.features, action_values, prefix=ACTION)
+                frame = {**observation_frame, **action_frame, "task": single_task}
+                dataset.add_frame(frame)
 
-        # Applies a pipeline to the action, default is IdentityProcessor
-        if policy is not None and act_processed_policy is not None:
-            action_values = act_processed_policy
-            robot_action_to_send = robot_action_processor((act_processed_policy, obs))
-        else:
-            action_values = act_processed_teleop
-            robot_action_to_send = robot_action_processor((act_processed_teleop, obs))
+            if display_data:
+                log_rerun_data(observation=obs_processed, action=action_values)
 
-        # Send action to robot
-        # Action can eventually be clipped using `max_relative_target`,
-        # so action actually sent is saved in the dataset. action = postprocessor.process(action)
-        # TODO(steven, pepijn, adil): we should use a pipeline step to clip the action, so the sent action is the action that we input to the robot.
-        print(robot_action_to_send)
-        if policy is not None:
-            robot_action_to_send.update(last_processed_teleop)
-        _sent_action = robot.send_action(robot_action_to_send)
+            dt_s = time.perf_counter() - start_loop_t
+            precise_sleep(1 / fps - dt_s)
 
-        # Write to dataset
-        if dataset is not None:
-            action_frame = build_dataset_frame(dataset.features, action_values, prefix=ACTION)
-            frame = {**observation_frame, **action_frame, "task": single_task}
-            dataset.add_frame(frame)
-
-        if display_data:
-            log_rerun_data(observation=obs_processed, action=action_values)
-
-        dt_s = time.perf_counter() - start_loop_t
-        precise_sleep(1 / fps - dt_s)
-
-        timestamp = time.perf_counter() - start_episode_t
+            timestamp = time.perf_counter() - start_episode_t
 
 
 @parser.wrap()
