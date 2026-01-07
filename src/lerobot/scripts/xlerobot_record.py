@@ -339,14 +339,16 @@ def record_loop(
             if isinstance(teleop, Teleoperator):
                 act = teleop.get_action()
                 if "w" or "s" in act:
-                    last_processed_teleop["x.vel"] = 0.1
+                    if "w" in act:
+                        last_processed_teleop["x.vel"] = 0.1
                     if "s" in act:
                         last_processed_teleop["x.vel"] = -0.1
                 else:
                     last_processed_teleop["x.vel"] = 0
                 
                 if "a" or "d" in act:
-                    last_processed_teleop["y.vel"] = 0.1
+                    if "a" in act:
+                        last_processed_teleop["y.vel"] = 0.1
                     if "d" in act:
                         last_processed_teleop["y.vel"] = -0.1
                 else:
@@ -372,14 +374,16 @@ def record_loop(
             act_processed_teleop = teleop_action_processor((act, obs))
 
             if "w" or "s" in act_processed_teleop:
-                last_processed_teleop["x.vel"] = 0.1
+                if "w" in act_processed_teleop:
+                    last_processed_teleop["x.vel"] = 0.1
                 if "s" in act_processed_teleop:
                     last_processed_teleop["x.vel"] = -0.1
             else:
                 last_processed_teleop["x.vel"] = 0
             
             if "a" or "d" in act_processed_teleop:
-                last_processed_teleop["y.vel"] = 0.1
+                if "a" in act_processed_teleop:
+                    last_processed_teleop["y.vel"] = 0.1
                 if "d" in act_processed_teleop:
                     last_processed_teleop["y.vel"] = -0.1
             else:
