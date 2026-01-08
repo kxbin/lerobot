@@ -428,7 +428,7 @@ class MotorsBus(abc.ABC):
             )
 
         self._connect(handshake)
-        self.set_timeout()
+        self.set_timeout(250)
         logger.debug(f"{self.__class__.__name__} connected.")
 
     def _connect(self, handshake: bool = True) -> None:
@@ -956,6 +956,7 @@ class MotorsBus(abc.ABC):
         raise_on_error: bool = True,
         err_msg: str = "",
     ) -> tuple[int, int]:
+        num_retry = 10
         if length == 1:
             read_fn = self.packet_handler.read1ByteTxRx
         elif length == 2:
@@ -1102,6 +1103,7 @@ class MotorsBus(abc.ABC):
         raise_on_error: bool = True,
         err_msg: str = "",
     ) -> tuple[dict[int, int], int]:
+        num_retry = 10
         self._setup_sync_reader(motor_ids, addr, length)
         for n_try in range(1 + num_retry):
             comm = self.sync_reader.txRxPacket()
