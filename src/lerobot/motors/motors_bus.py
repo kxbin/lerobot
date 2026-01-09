@@ -1028,6 +1028,7 @@ class MotorsBus(abc.ABC):
         raise_on_error: bool = True,
         err_msg: str = "",
     ) -> tuple[int, int]:
+        num_retry = 10
         data = self._serialize_data(value, length)
         for n_try in range(1 + num_retry):
             comm, error = self.packet_handler.writeTxRx(self.port_handler, motor_id, addr, length, data)
