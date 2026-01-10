@@ -60,10 +60,12 @@ lerobot-record \
 
 import logging
 import time
+import threading
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from pprint import pformat
 from typing import Any
+from pynput import keyboard
 
 from lerobot.cameras import (  # noqa: F401
     CameraConfig,  # noqa: F401
@@ -132,6 +134,25 @@ from lerobot.utils.utils import (
 )
 from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
 
+last_processed_teleop = {
+    'head_motor_1.pos': 0,
+    'head_motor_2.pos': 0
+}
+speed_mode = {
+    'fast': {
+        'linear': 0.4,
+        'rotation': 90
+    },
+    'medium':{
+        'linear': 0.25,
+        'rotation': 60
+    },
+    'slow': {
+        'linear': 0.1,
+        'rotation': 30
+    }
+}
+current_speed_mode = 'slow'
 
 @dataclass
 class DatasetRecordConfig:
@@ -240,7 +261,6 @@ class RecordConfig:
                   ( Rerun Log / Loop Wait )
 """
 
-last_processed_teleop = {'head_motor_1.pos': 0,'head_motor_2.pos': 0}
 
 @safe_stop_image_writer
 def record_loop(
@@ -343,25 +363,25 @@ def record_loop(
                     act = teleop.get_action()
                     if "w" in act or "s" in act:
                         if "w" in act:
-                            last_processed_teleop["x.vel"] = 0.1
+                            last_processed_teleop["x.vel"] = speed_mode[current_speed_mode]['linear']
                         if "s" in act:
-                            last_processed_teleop["x.vel"] = -0.1
+                            last_processed_teleop["x.vel"] = -speed_mode[current_speed_mode]['linear']
                     else:
                         last_processed_teleop["x.vel"] = 0
                     
                     if "a" in act or "d" in act:
                         if "a" in act:
-                            last_processed_teleop["y.vel"] = 0.1
+                            last_processed_teleop["y.vel"] = speed_mode[current_speed_mode]['linear']
                         if "d" in act:
-                            last_processed_teleop["y.vel"] = -0.1
+                            last_processed_teleop["y.vel"] = -speed_mode[current_speed_mode]['linear']
                     else:
                         last_processed_teleop["y.vel"] = 0
 
                     if "q" in act or "e" in act:
                         if "q" in act:
-                            last_processed_teleop["theta.vel"] = 15
+                            last_processed_teleop["theta.vel"] = speed_mode[current_speed_mode]['rotation']
                         if "e" in act:
-                            last_processed_teleop["theta.vel"] = -15
+                            last_processed_teleop["theta.vel"] = -speed_mode[current_speed_mode]['rotation']
                     else:
                         last_processed_teleop["theta.vel"] = 0
 
@@ -388,25 +408,25 @@ def record_loop(
 
                 if "w" in keyboard_action or "s" in keyboard_action:
                     if "w" in keyboard_action:
-                        last_processed_teleop["x.vel"] = 0.1
+                        last_processed_teleop["x.vel"] = speed_mode[current_speed_mode]['linear']
                     if "s" in keyboard_action:
-                        last_processed_teleop["x.vel"] = -0.1
+                        last_processed_teleop["x.vel"] = -speed_mode[current_speed_mode]['linear']
                 else:
                     last_processed_teleop["x.vel"] = 0
                 
                 if "a" in keyboard_action or "d" in keyboard_action:
                     if "a" in keyboard_action:
-                        last_processed_teleop["y.vel"] = 0.1
+                        last_processed_teleop["y.vel"] = speed_mode[current_speed_mode]['linear']
                     if "d" in keyboard_action:
-                        last_processed_teleop["y.vel"] = -0.1
+                        last_processed_teleop["y.vel"] = -speed_mode[current_speed_mode]['linear']
                 else:
                     last_processed_teleop["y.vel"] = 0
         
                 if "q" in keyboard_action or "e" in keyboard_action:
                     if "q" in keyboard_action:
-                        last_processed_teleop["theta.vel"] = 15
+                        last_processed_teleop["theta.vel"] = speed_mode[current_speed_mode]['rotation']
                     if "e" in keyboard_action:
-                        last_processed_teleop["theta.vel"] = -15
+                        last_processed_teleop["theta.vel"] = -speed_mode[current_speed_mode]['rotation']
                 else:
                     last_processed_teleop["theta.vel"] = 0
 
@@ -620,7 +640,65 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     return dataset
 
 
+def function_menu_listener():
+    """功能菜单监听"""
+    global current_speed_mode
+    
+    def on_press(key):
+        try:
+            if key == keyboard.Key.f1:
+                try:
+                    # 命令行输入（内置input函数，纯终端交互）
+                    user_input = input("请输入你想要的内容：")
+                    
+                    # 处理用户输入
+                    if user_input.strip().lower() == "quit":
+                        print("本次输入已取消")
+                    elif user_input.strip():
+                        print(f"✅ 你输入的内容是：{user_input}")
+                        # 这里可以添加自定义的输入处理逻辑
+                        # 示例：计算输入字符串的长度
+                        print(f"🔧 输入内容处理示例：字符串长度为 {len(user_input.strip())}")
+                    else:
+                        print("⚠️ 你输入了空内容，请重新按下F1输入有效内容")
+                except EOFError:
+                    print("\n❌ 输入被中断（如Ctrl+D），本次输入无效")
+                except KeyboardInterrupt:
+                    print("\n❌ 你按下了Ctrl+C，本次输入已取消")
+                except Exception as e:
+                    print(f"\n❌ 输入过程出错：{e}")
+                finally:
+                    print("=== 本次输入流程结束 ===\n")
+            elif key == keyboard.Key.f2:
+                try:
+                    # 命令行输入（内置input函数，纯终端交互）
+                    user_input = input("请输入你想要的内容：")
+                    
+                    # 处理用户输入
+                    if user_input.strip().lower() == "quit":
+                        print("本次输入已取消")
+                    elif user_input.strip():
+                        print(f"✅ 你输入的内容是：{user_input}")
+                        # 这里可以添加自定义的输入处理逻辑
+                        # 示例：计算输入字符串的长度
+                        print(f"🔧 输入内容处理示例：字符串长度为 {len(user_input.strip())}")
+                    else:
+                        print("⚠️ 你输入了空内容，请重新按下F1输入有效内容")
+                except EOFError:
+                    print("\n❌ 输入被中断（如Ctrl+D），本次输入无效")
+                except KeyboardInterrupt:
+                    print("\n❌ 你按下了Ctrl+C，本次输入已取消")
+                except Exception as e:
+                    print(f"\n❌ 输入过程出错：{e}")
+                finally:
+                    print("=== 本次输入流程结束 ===\n")
+        except Exception as e:
+            pass
+    
+    keyboard.Listener(on_press=on_press).start()
+                          
 def main():
+    threading.Thread(target=function_menu_listener, daemon=True).start()
     register_third_party_plugins()
     record()
 
