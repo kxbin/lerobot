@@ -58,6 +58,8 @@ lerobot-record \
 ```
 """
 
+import msvcrt
+import sys
 import logging
 import time
 import threading
@@ -651,22 +653,23 @@ def function_menu():
         try:
             if key == keyboard.Key.f1:
                 try:
+                    try:
+                        while msvcrt.kbhit(): msvcrt.getch()
+                    except:
+                        sys.stdin.flush()
+
                     xlerobot_keyboard.listen_pause()
-                    user_input = input("请输入你想要的内容：")
+                    user_input = input("请输入让机器人说的话：")
                     if user_input.strip().lower() == "quit":
                         print("本次输入已取消")
                     elif user_input.strip():
-                        print(f"✅ 你输入的内容是：{user_input}")
-                        # 这里可以添加自定义的输入处理逻辑
-                        # 示例：计算输入字符串的长度
-                        print(f"🔧 输入内容处理示例：字符串长度为 {len(user_input.strip())}")
+                        log_say(user_input)
                     else:
-                        print("⚠️ 你输入了空内容，请重新按下F1输入有效内容")
+                        print("你输入了空内容")
                 except Exception as e:
-                    print(f"\n❌ 输入过程出错：{e}")
+                    print(f"\n输入过程出错:{e}")
                 finally:
                     xlerobot_keyboard.listen_resume()
-                    print("=== 本次输入流程结束 ===\n")
             elif key == keyboard.Key.f2:
                 pass
         except Exception as e:
