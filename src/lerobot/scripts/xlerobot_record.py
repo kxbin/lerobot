@@ -152,6 +152,8 @@ speed_mode = {
         'rotation': 30
     }
 }
+xlerobot_keyboard_listener, function_menu_keyboard_listener = None, None
+xlerobot_keyboard_pause_event = threading.Event()
 current_speed_mode = 'slow'
 
 @dataclass
@@ -563,6 +565,15 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                 teleop.connect()
 
         listener, events = init_keyboard_listener()
+        # 增加键盘监听的暂停和恢复
+        xlerobot_keyboard_pause_event.clear()
+        old_on_press = listener.on_press
+        def wrapped_on_press(key):
+            if not xlerobot_keyboard_pause_event.is_set():
+                return
+            return old_on_press(key)
+        listener.on_press = wrapped_on_press
+        xlerobot_keyboard_listener = listener
 
         with VideoEncodingManager(dataset):
             recorded_episodes = 0
@@ -640,18 +651,15 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     return dataset
 
 
-def function_menu_listener():
-    """功能菜单监听"""
-    global current_speed_mode
+def function_menu():
+    global current_speed_mode, xlerobot_keyboard_listener, function_menu_keyboard_listener
     
     def on_press(key):
         try:
             if key == keyboard.Key.f1:
                 try:
-                    # 命令行输入（内置input函数，纯终端交互）
+                    xlerobot_keyboard_pause_event.set()
                     user_input = input("请输入你想要的内容：")
-                    
-                    # 处理用户输入
                     if user_input.strip().lower() == "quit":
                         print("本次输入已取消")
                     elif user_input.strip():
@@ -661,44 +669,21 @@ def function_menu_listener():
                         print(f"🔧 输入内容处理示例：字符串长度为 {len(user_input.strip())}")
                     else:
                         print("⚠️ 你输入了空内容，请重新按下F1输入有效内容")
-                except EOFError:
-                    print("\n❌ 输入被中断（如Ctrl+D），本次输入无效")
-                except KeyboardInterrupt:
-                    print("\n❌ 你按下了Ctrl+C，本次输入已取消")
                 except Exception as e:
                     print(f"\n❌ 输入过程出错：{e}")
                 finally:
+                    xlerobot_keyboard_pause_event.clear()
                     print("=== 本次输入流程结束 ===\n")
             elif key == keyboard.Key.f2:
-                try:
-                    # 命令行输入（内置input函数，纯终端交互）
-                    user_input = input("请输入你想要的内容：")
-                    
-                    # 处理用户输入
-                    if user_input.strip().lower() == "quit":
-                        print("本次输入已取消")
-                    elif user_input.strip():
-                        print(f"✅ 你输入的内容是：{user_input}")
-                        # 这里可以添加自定义的输入处理逻辑
-                        # 示例：计算输入字符串的长度
-                        print(f"🔧 输入内容处理示例：字符串长度为 {len(user_input.strip())}")
-                    else:
-                        print("⚠️ 你输入了空内容，请重新按下F1输入有效内容")
-                except EOFError:
-                    print("\n❌ 输入被中断（如Ctrl+D），本次输入无效")
-                except KeyboardInterrupt:
-                    print("\n❌ 你按下了Ctrl+C，本次输入已取消")
-                except Exception as e:
-                    print(f"\n❌ 输入过程出错：{e}")
-                finally:
-                    print("=== 本次输入流程结束 ===\n")
+                pass
         except Exception as e:
             pass
     
-    keyboard.Listener(on_press=on_press).start()
+    function_menu_keyboard_listener = keyboard.Listener(on_press=on_press)
+    function_menu_keyboard_listener.start()
                           
 def main():
-    threading.Thread(target=function_menu_listener, daemon=True).start()
+    threading.Thread(target=function_menu, daemon=True).start()
     register_third_party_plugins()
     record()
 
