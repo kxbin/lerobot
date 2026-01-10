@@ -315,6 +315,16 @@ def record_loop(
             raise ValueError(
                 "For multi-teleop, the list must contain exactly one KeyboardTeleop and one arm teleoperator. Currently only supported for LeKiwi robot."
             )
+        
+        # 增加键盘监听的暂停和恢复
+        xlerobot_keyboard_pause_event.clear()
+        old_on_press = teleop_keyboard.listener.on_press
+        def wrapped_on_press(key):
+            if xlerobot_keyboard_pause_event.is_set():
+                return
+            return old_on_press(key)
+        teleop_keyboard.listener.on_press = wrapped_on_press
+        xlerobot_keyboard_listener = teleop_keyboard.listener
 
     # Reset policy and processor if they are provided
     if policy is not None and preprocessor is not None and postprocessor is not None:
@@ -565,15 +575,6 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                 teleop.connect()
 
         listener, events = init_keyboard_listener()
-        # 增加键盘监听的暂停和恢复
-        xlerobot_keyboard_pause_event.clear()
-        old_on_press = listener.on_press
-        def wrapped_on_press(key):
-            if not xlerobot_keyboard_pause_event.is_set():
-                return
-            return old_on_press(key)
-        listener.on_press = wrapped_on_press
-        xlerobot_keyboard_listener = listener
 
         with VideoEncodingManager(dataset):
             recorded_episodes = 0
