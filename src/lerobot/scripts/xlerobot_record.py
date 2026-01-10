@@ -652,7 +652,8 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
 
 
 def function_menu():
-    global current_speed_mode, xlerobot_keyboard_listener, function_menu_keyboard_listener
+    global current_speed_mode, xlerobot_keyboard_pause_event
+    global xlerobot_keyboard_listener, function_menu_keyboard_listener
     
     def on_press(key):
         try:
