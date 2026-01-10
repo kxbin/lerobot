@@ -152,9 +152,8 @@ speed_mode = {
         'rotation': 30
     }
 }
-xlerobot_keyboard_listener, function_menu_keyboard_listener = None, None
-xlerobot_keyboard_pause_event = threading.Event()
 current_speed_mode = 'slow'
+xlerobot_keyboard = None
 
 @dataclass
 class DatasetRecordConfig:
@@ -316,16 +315,8 @@ def record_loop(
                 "For multi-teleop, the list must contain exactly one KeyboardTeleop and one arm teleoperator. Currently only supported for LeKiwi robot."
             )
         
-        # 增加键盘监听的暂停和恢复
-        global xlerobot_keyboard_listener, xlerobot_keyboard_pause_event
-        xlerobot_keyboard_pause_event.clear()
-        old_on_press = teleop_keyboard.listener.on_press
-        def wrapped_on_press(key):
-            if xlerobot_keyboard_pause_event.is_set():
-                return
-            return old_on_press(key)
-        teleop_keyboard.listener.on_press = wrapped_on_press
-        xlerobot_keyboard_listener = teleop_keyboard.listener
+        global xlerobot_keyboard
+        xlerobot_keyboard = teleop_keyboard
 
     # Reset policy and processor if they are provided
     if policy is not None and preprocessor is not None and postprocessor is not None:
@@ -654,14 +645,13 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
 
 
 def function_menu():
-    global current_speed_mode, xlerobot_keyboard_pause_event
-    global xlerobot_keyboard_listener, function_menu_keyboard_listener
+    global current_speed_mode, xlerobot_keyboard
     
     def on_press(key):
         try:
             if key == keyboard.Key.f1:
                 try:
-                    xlerobot_keyboard_pause_event.set()
+                    xlerobot_keyboard.listen_pause()
                     user_input = input("请输入你想要的内容：")
                     if user_input.strip().lower() == "quit":
                         print("本次输入已取消")
@@ -675,15 +665,14 @@ def function_menu():
                 except Exception as e:
                     print(f"\n❌ 输入过程出错：{e}")
                 finally:
-                    xlerobot_keyboard_pause_event.clear()
+                    xlerobot_keyboard.listen_resume()
                     print("=== 本次输入流程结束 ===\n")
             elif key == keyboard.Key.f2:
                 pass
         except Exception as e:
             pass
     
-    function_menu_keyboard_listener = keyboard.Listener(on_press=on_press)
-    function_menu_keyboard_listener.start()
+    keyboard.Listener(on_press=on_press).start()
                           
 def main():
     threading.Thread(target=function_menu, daemon=True).start()

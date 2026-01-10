@@ -65,6 +65,14 @@ class KeyboardTeleop(Teleoperator):
         self.listener = None
         self.logs = {}
 
+        self.is_pause = False
+
+    def listen_pause(self):
+        self.is_pause = True
+
+    def listen_resume(self):
+        self.is_pause = False
+
     @property
     def action_features(self) -> dict:
         return {
@@ -106,7 +114,7 @@ class KeyboardTeleop(Teleoperator):
         pass
 
     def _on_press(self, key):
-        if hasattr(key, "char"):
+        if hasattr(key, "char") and not self.is_pause:
             self.event_queue.put((key.char, True))
 
     def _on_release(self, key):
