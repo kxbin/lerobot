@@ -659,11 +659,19 @@ def function_menu():
                         sys.stdin.flush()
 
                     xlerobot_keyboard.listen_pause()
-                    user_input = input("请输入让机器人说的话：")
-                    if user_input.strip().lower() == "quit":
-                        print("本次输入已取消")
-                    elif user_input.strip():
-                        log_say(user_input)
+                    print("===== 可选操作 =====")
+                    print("1 - 你好，我是好太太机器人")
+                    print("2 - 你好，我正在测试请不要触碰我，谢谢")
+                    print("输入其他内容 = 让机器人直接说该内容")
+                    print("====================")
+                    user_input = input("请输入：")
+                    if user_input.strip():
+                        if user_input == '1':
+                            log_say('你好，我是好太太机器人')
+                        elif user_input == '2':
+                            log_say('你好，我正在测试请不要触碰我，谢谢')
+                        else:
+                            log_say(user_input)
                     else:
                         print("你输入了空内容")
                 except Exception as e:
@@ -671,7 +679,33 @@ def function_menu():
                 finally:
                     xlerobot_keyboard.listen_resume()
             elif key == keyboard.Key.f2:
-                pass
+                try:
+                    try:
+                        while msvcrt.kbhit(): msvcrt.getch()
+                    except:
+                        sys.stdin.flush()
+
+                    xlerobot_keyboard.listen_pause()
+                    print("===== 可选操作 =====")
+                    print("1 - 切换为慢速模式")
+                    print("2 - 切换为中速模式")
+                    print("3 - 切换为快速模式")
+                    print("====================")
+                    user_input = input("请输入：")
+                    if user_input.strip():
+                        if user_input == '1':
+                            current_speed_mode = 'slow'
+                            log_say('已切换为慢速模式')
+                        elif user_input == '2':
+                            current_speed_mode = 'medium'
+                            log_say('已切换为中速模式')
+                        elif user_input == '3':
+                            current_speed_mode = 'fast'
+                            log_say('已切换为快速模式')
+                except Exception as e:
+                    print(f"\n输入过程出错:{e}")
+                finally:
+                    xlerobot_keyboard.listen_resume()
         except Exception as e:
             pass
     
