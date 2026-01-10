@@ -317,6 +317,7 @@ def record_loop(
             )
         
         # 增加键盘监听的暂停和恢复
+        global xlerobot_keyboard_listener, xlerobot_keyboard_pause_event
         xlerobot_keyboard_pause_event.clear()
         old_on_press = teleop_keyboard.listener.on_press
         def wrapped_on_press(key):
