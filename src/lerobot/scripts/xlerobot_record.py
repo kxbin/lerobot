@@ -648,7 +648,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
 
 def function_menu():
     def on_press(key):
-        global current_speed_mode, xlerobot_keyboard
+        global current_speed_mode
         try:
             if key == keyboard.Key.f1:
                 try:
